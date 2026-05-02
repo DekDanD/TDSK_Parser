@@ -52,7 +52,35 @@ def plot_graphics(df: pd.DataFrame):
     pivot_table.plot(kind='bar', figsize=(12, 6), title='Активные объекты ТДСК (2П 2023)')
     plt.show()
 
-  
+    plt.pie(df['room_count'].value_counts(), labels=df['room_count'].value_counts().index)
+    plt.title('Распределение квартир по комнатам (изначальная выборка)')
+    plt.legend()
+    plt.axis('equal')
+    plt.show()
+
+    bins = [0, 20, 30, 40, 50, 60, 70, 80, 90, 100, float('inf')]
+    labels = ['<20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '>100']
+
+    df_area = pd.cut(df['area'], bins=bins, labels=labels).value_counts().sort_index()
+
+    x = np.arange(len(labels))
+    width = 0.4
+
+    bars = plt.bar(x, df_area, width)
+    plt.bar_label(bars)
+    plt.show()
+
+    bins = [0, 4000000, 5000000, 6000000, 7000000, 8000000, float('inf')]
+    labels = ['<4 млн', '4-5', '5-6', '6-7', '7-8', '>8 млн']
+
+    df_price = pd.cut(df['price'], bins=bins, labels=labels).value_counts().sort_index()
+
+    x = np.arange(len(labels))
+    width = 0.4
+
+    bars = plt.bar(x, df_price, width)
+    plt.bar_label(bars)
+    plt.show()
 
 df = parse_apartments_csv()
 make_actual_table_to_write(df)
