@@ -63,10 +63,9 @@ def plot_graphics(df: pd.DataFrame):
 
     df_area = pd.cut(df['area'], bins=bins, labels=labels).value_counts().sort_index()
 
-    x = np.arange(len(labels))
-    width = 0.4
+    width = 0.2
 
-    bars = plt.bar(x, df_area, width)
+    bars = plt.bar(labels, df_area, width)
     plt.bar_label(bars)
     plt.show()
 
@@ -75,12 +74,12 @@ def plot_graphics(df: pd.DataFrame):
 
     df_price = pd.cut(df['price'], bins=bins, labels=labels).value_counts().sort_index()
 
-    x = np.arange(len(labels))
-    width = 0.4
+    width = 0.2
 
-    bars = plt.bar(x, df_price, width)
+    bars = plt.bar(labels, df_price, width)
     plt.bar_label(bars)
     plt.show()
+
 
 df = parse_apartments_csv()
 make_actual_table_to_write(df)
