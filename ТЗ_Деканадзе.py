@@ -11,6 +11,7 @@ def parse_apartments_csv():
     df = pd.read_csv('Экспозиция ТДСК с 01.07.2023 по 31.12.2023 (1).csv', sep='\t')
 
     df['actualized_at'] = pd.to_datetime(df['actualized_at'], format='ISO8601').dt.tz_localize(None).dt.normalize()
+    df['published_at'] = pd.to_datetime(df['published_at'], format='ISO8601').dt.tz_localize(None).dt.normalize()
     return df
 
 
@@ -30,13 +31,39 @@ def make_actual_table_to_write(df: pd.DataFrame):
 
 
 def extend_dataframe(df: pd.DataFrame):
-    pass
+    i = 1
+    rows = []
+    tdsk = requests.get(f'https://www.t-dsk.ru/buildings/search-apartments/?objects=all&PAGEN_3={i}')
+    bs = BeautifulSoup(tdsk.text, 'html.parser')
+    object_count = int(bs.find('span', class_='search-result__count-value').get_text())
+    while len(rows) < object_count:
+        tdsk = requests.get(f'https://www.t-dsk.ru/buildings/search-apartments/?objects=all&PAGEN_3={i}')
+        bs = BeautifulSoup(tdsk.text, 'html.parser')
+        container = bs.find('div', class_='display-flex pagination')
+        if container:
+            for div in container.find_all('div', recursive=False):
+                item = div.find('a', class_='search-result__item-flat')
+
+                rooms = item.get('data-rooms')
+                price_sale = item.get('data-price-sale')
+
+                area = div.find('div', class_='search-result__item-area').get_text(strip=True)
+                address = div.find('div', class_='search-result__address').get_text(strip=True)
+             
+                rows.append({'room_count': int(rooms),
+                             'price': int(price_sale.replace(' ', '')),
+                             'area': float(area.split()[0].replace(',', '.')),
+                             'address': address})
+            i += 1
+
+    another_df = pd.DataFrame(rows)
+    return pd.concat([df, another_df], ignore_index=True)
 
 
 def plot_graphics(df: pd.DataFrame):
-    df['published_at'] = pd.to_datetime(df['published_at'], format='ISO8601').dt.tz_localize(None).dt.normalize()
-    df['actualized_at'] = pd.to_datetime(df['actualized_at'])
-    df_for_plot = df[(df['actualized_at'] >= '2023-07-01') & (df['actualized_at'] <= '2024-12-31') & (df['published_at'] <= '2023-12-31')]
+    df_for_plot = df[(df['actualized_at'] >= '2023-07-01') & 
+                     (df['actualized_at'] <= '2024-12-31') &
+                    (df['published_at'] <= '2023-12-31')]
     life = df_for_plot.groupby(['id', 'room_count']).agg(
     start=('published_at', 'min'), 
     end=('actualized_at', 'max')
@@ -52,37 +79,69 @@ def plot_graphics(df: pd.DataFrame):
     pivot_table.plot(kind='bar', figsize=(12, 6), title='Активные объекты ТДСК (2П 2023)')
     plt.show()
 
-    plt.pie(df['room_count'].value_counts(), labels=df['room_count'].value_counts().index)
+    extended_df = extend_dataframe(df)
+
+    width = 0.2
+
+    plt.figure(figsize=(10, 8))
+    plt.subplot(2, 1, 1)
+    rooms_df = df['room_count'].value_counts().sort_index()
+    rooms_extended_df = extended_df['room_count'].value_counts().sort_index()
+    bars = plt.bar(rooms_df.index.astype(str), rooms_df.values, width)
+    plt.bar_label(bars)
+    plt.margins(y=0.15)
     plt.title('Распределение квартир по комнатам (изначальная выборка)')
-    plt.legend()
-    plt.axis('equal')
+
+    plt.subplot(2, 1, 2)
+    bars = plt.bar(rooms_extended_df.index.astype(str), rooms_extended_df.values, width)
+    plt.bar_label(bars)
+    plt.margins(y=0.15)
+    plt.title('Распределение квартир по комнатам (новая выборка)')
     plt.show()
 
     bins = [0, 20, 30, 40, 50, 60, 70, 80, 90, 100, float('inf')]
     labels = ['<20', '20-30', '30-40', '40-50', '50-60', '60-70', '70-80', '80-90', '90-100', '>100']
 
     df_area = pd.cut(df['area'], bins=bins, labels=labels).value_counts().sort_index()
+    extended_df_area = pd.cut(extended_df['area'], bins=bins, labels=labels).value_counts().sort_index()
 
-    width = 0.2
-
+    plt.figure(figsize=(10, 8))
+    plt.subplot(2, 1, 1)
     bars = plt.bar(labels, df_area, width)
     plt.bar_label(bars)
+    plt.title('Распределение квартир по площади (изначальная выборка)')
+    plt.margins(y=0.15)
+
+    plt.subplot(2, 1, 2)
+    bars = plt.bar(labels, extended_df_area, width)
+    plt.bar_label(bars)
+    plt.margins(y=0.15)
+    plt.title('Распределение квартир по площади (новая выборка)')
+
     plt.show()
 
     bins = [0, 4000000, 5000000, 6000000, 7000000, 8000000, float('inf')]
     labels = ['<4 млн', '4-5', '5-6', '6-7', '7-8', '>8 млн']
 
     df_price = pd.cut(df['price'], bins=bins, labels=labels).value_counts().sort_index()
+    extended_df_price = pd.cut(extended_df['price'], bins=bins, labels=labels).value_counts().sort_index()
 
-    width = 0.2
-
+    plt.figure(figsize=(10, 8))
+    plt.subplot(2, 1, 1)
     bars = plt.bar(labels, df_price, width)
     plt.bar_label(bars)
+    plt.title('Распределение квартир по стоимости (изначальная выборка)')
+    plt.margins(y=0.15)
+
+    plt.subplot(2, 1, 2)
+    bars = plt.bar(labels, extended_df_price, width)
+    plt.bar_label(bars)
+    plt.margins(y=0.15)
+    plt.title('Распределение квартир по стоимости (новая выборка)')
+
     plt.show()
 
 
 df = parse_apartments_csv()
 make_actual_table_to_write(df)
 plot_graphics(df)
-
-extend_dataframe(df)
