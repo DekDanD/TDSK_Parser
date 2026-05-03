@@ -11,3 +11,7 @@
 <img width="1586" height="839" alt="image" src="https://github.com/user-attachments/assets/91e2ef6b-1dd3-430c-94c5-935b8a221b5e" />
 <img width="1581" height="827" alt="image" src="https://github.com/user-attachments/assets/78048d7c-d9a7-41d8-a57f-00ac2d24b3da" />
 
+## Инструкция по запуску проекта
+
+1. Склонируйте репозиторий себе на компьютее:
+2. 
