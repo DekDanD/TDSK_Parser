@@ -22,7 +22,7 @@ cd TDSK_Parser
 ```bash
 pip install -r requirements.txt
 ```
-3.  Запустие `main.py`
+3.  Запустите `main.py`
 ```bash
 python main.py
 ```
