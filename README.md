@@ -15,8 +15,8 @@
 
 1.  Склонируйте репозиторий себе на компьютер:
 ```bash
-git clone <ссылка_на_ваш_репозиторий>
-cd <название_папки_проекта>
+git clone https://github.com/DekDanD/TDSK_Parser.git
+cd TDSK_Parser
 ```
 2.  Установите зависимости:
 ```bash
