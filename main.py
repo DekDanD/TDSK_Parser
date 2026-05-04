@@ -141,7 +141,7 @@ def plot_graphics(df: pd.DataFrame):
 
     plt.show()
 
-
-df = parse_apartments_csv()
-make_actual_table_to_write(df)
-plot_graphics(df)
+if __name__ == '__main__':
+    df = parse_apartments_csv()
+    make_actual_table_to_write(df)
+    plot_graphics(df)
